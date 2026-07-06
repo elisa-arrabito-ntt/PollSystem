@@ -5,6 +5,7 @@ import com.example.pollSystem.dto.response.PollListPageResponseDto;
 import com.example.pollSystem.dto.response.PollResponseDto;
 import com.example.pollSystem.entity.Poll;
 import com.example.pollSystem.entity.PollStatus;
+import com.example.pollSystem.exception.PollNotFoundException;
 import com.example.pollSystem.mapper.PollMapper;
 import com.example.pollSystem.repository.PollRepository;
 import lombok.RequiredArgsConstructor;
@@ -73,5 +74,16 @@ public class PollService {
         response.setContents(contents);
 
         return response;
+    }
+
+
+    public PollResponseDto getPollById(Long id) {
+        Poll poll = pollRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.warn("Poll with id {} not found", id);
+                    return new PollNotFoundException("Poll not found");
+                });
+
+        return pollMapper.toResponseDto(poll);
     }
 }
