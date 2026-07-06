@@ -1,67 +1,80 @@
 package com.example.pollSystem.exception;
 
-import com.example.pollSystem.dto.response.ErrorResponseDto;
+import com.example.pollSystem.dto.response.ValidationErrorResponseDto;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
 import java.time.LocalDateTime;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ControllerAdvice;
 
-@Slf4j
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler({
-            UsernameAlreadyExistsException.class,
-            EmailAlreadyExistsException.class
-    })
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ResponseBody
-    public ErrorResponseDto handleBusinessExceptions(RuntimeException ex, HttpServletRequest request) {
-        log.warn("Business error: {}", ex.getMessage());
+    @ExceptionHandler(UsernameAlreadyExistsException.class)
+    public ResponseEntity<ValidationErrorResponseDto> handleUsernameAlreadyExists(
+            UsernameAlreadyExistsException ex,
+            HttpServletRequest request) {
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
+    }
 
-        return ErrorResponseDto.builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.BAD_REQUEST.value())
-                .message(ex.getMessage())
-                .path(request.getRequestURI())
-                .build();
+    @ExceptionHandler(EmailAlreadyExistsException.class)
+    public ResponseEntity<ValidationErrorResponseDto> handleEmailAlreadyExists(
+            EmailAlreadyExistsException ex,
+            HttpServletRequest request) {
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ResponseBody
-    public ErrorResponseDto handleValidationException(MethodArgumentNotValidException ex,
-                                                      HttpServletRequest request) {
+    public ResponseEntity<ValidationErrorResponseDto> handleMethodArgumentNotValid(
+            MethodArgumentNotValidException ex,
+            HttpServletRequest request) {
+
         String message = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
                 .findFirst()
-                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .map(error -> error.getDefaultMessage())
                 .orElse("Validation error");
 
-        log.warn("Validation error on path {}: {}", request.getRequestURI(), message);
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, message, request);
+    }
 
-        return ErrorResponseDto.builder()
-                .timestamp(LocalDateTime.now())
-                .status(HttpStatus.BAD_REQUEST.value())
-                .message(message)
-                .path(request.getRequestURI())
-                .build();
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ValidationErrorResponseDto> handleConstraintViolation(
+            ConstraintViolationException ex,
+            HttpServletRequest request) {
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ValidationErrorResponseDto> handleInvalidCredentials(
+            InvalidCredentialsException ex,
+            HttpServletRequest request) {
+        return buildErrorResponse(HttpStatus.UNAUTHORIZED, ex.getMessage(), request);
     }
 
     @ExceptionHandler(Exception.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    @ResponseBody
-    public ErrorResponseDto handleGenericException(Exception ex, HttpServletRequest request) {
-        log.error("Unexpected error on path {}", request.getRequestURI(), ex);
+    public ResponseEntity<ValidationErrorResponseDto> handleGenericException(
+            Exception ex,
+            HttpServletRequest request) {
+        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error", request);
+    }
 
-        return ErrorResponseDto.builder()
+    private ResponseEntity<ValidationErrorResponseDto> buildErrorResponse(
+            HttpStatus status,
+            String message,
+            HttpServletRequest request) {
+
+        ValidationErrorResponseDto response = ValidationErrorResponseDto.builder()
                 .timestamp(LocalDateTime.now())
-                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                .message("Unexpected error")
+                .status(status.value())
+                .message(message)
                 .path(request.getRequestURI())
                 .build();
+
+        return ResponseEntity.status(status).body(response);
     }
 }

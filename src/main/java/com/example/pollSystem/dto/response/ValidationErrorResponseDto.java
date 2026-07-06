@@ -6,7 +6,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class ErrorResponseDto {
+public class ValidationErrorResponseDto {
 
     private LocalDateTime timestamp;
     private int status;
