@@ -56,6 +56,79 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(HttpStatus.UNAUTHORIZED, ex.getMessage(), request);
     }
 
+    @ExceptionHandler(PollNotFoundException.class)
+    public ResponseEntity<ValidationErrorResponseDto> handlePollNotFound(
+            PollNotFoundException ex,
+            HttpServletRequest request
+    ) {
+        ValidationErrorResponseDto body = ValidationErrorResponseDto.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.NOT_FOUND.value())
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
+    }
+
+    @ExceptionHandler(OptionNotFoundException.class)
+    public ResponseEntity<ValidationErrorResponseDto> handleOptionNotFound(
+            OptionNotFoundException ex,
+            HttpServletRequest request
+    ) {
+        ValidationErrorResponseDto body = ValidationErrorResponseDto.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.NOT_FOUND.value())
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
+    }
+
+    @ExceptionHandler({
+            PollOwnershipException.class,
+            PollNotModifiableException.class,
+            OptionNotModifiableException.class,
+            InvalidOptionOperationException.class,
+            InvalidVoteException.class,
+            VoteNotFoundException.class
+    })
+    public ResponseEntity<ValidationErrorResponseDto> handlePollOptionVoteBusiness(
+            RuntimeException ex,
+            HttpServletRequest request
+    ) {
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+
+        if (ex instanceof PollOwnershipException) {
+            status = HttpStatus.FORBIDDEN;
+        }
+
+        ValidationErrorResponseDto body = ValidationErrorResponseDto.builder()
+                .timestamp(LocalDateTime.now())
+                .status(status.value())
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .build();
+
+        return ResponseEntity.status(status).body(body);
+    }
+
+    @ExceptionHandler(UsernameNotFoundException.class)
+    public ResponseEntity<ValidationErrorResponseDto> handleUsernameNotFound(
+            UsernameNotFoundException ex,
+            HttpServletRequest request
+    ) {
+        ValidationErrorResponseDto body = ValidationErrorResponseDto.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.UNAUTHORIZED.value())
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ValidationErrorResponseDto> handleGenericException(
             Exception ex,

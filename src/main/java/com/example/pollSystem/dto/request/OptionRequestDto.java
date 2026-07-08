@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
-public class CreateOptionRequestDto {
+public class OptionRequestDto {
 
     @NotBlank
     private String message;
