@@ -23,7 +23,7 @@ public class Option {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
-    @ManyToOne(fetch = FetchType.LAZY) // carica Poll solo se accedi a option.getPoll(), utile per prestazioni
+    @ManyToOne(fetch = FetchType.LAZY, optional = false) // carica Poll solo se accedi a option.getPoll(), utile per prestazioni
     @JoinColumn(name = "poll_id", nullable = false)
     private Poll poll;
 }

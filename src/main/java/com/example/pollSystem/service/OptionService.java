@@ -40,7 +40,7 @@ public class OptionService {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String currentUser = auth.getName();
 
-        if (!poll.getOwner().equals(currentUser)) {
+        if (!poll.getOwner().getUsername().equals(currentUser)) {
             log.warn("User {} attempted to add option to poll {} owned by {}",
                     currentUser, pollId, poll.getOwner());
             throw new PollOwnershipException("Only the owner can add options to this poll");
@@ -87,7 +87,7 @@ public class OptionService {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String currentUser = auth.getName();
 
-        if (!poll.getOwner().equals(currentUser)) {
+        if (!poll.getOwner().getUsername().equals(currentUser)) {
             log.warn("User {} attempted to update option in poll {} owned by {}",
                     currentUser, pollId, poll.getOwner());
             throw new PollOwnershipException("Only the owner can update options in this poll");
@@ -140,7 +140,7 @@ public class OptionService {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String currentUser = auth.getName();
 
-        if (!poll.getOwner().equals(currentUser)) {
+        if (!poll.getOwner().getUsername().equals(currentUser)) {
             log.warn("User {} attempted to delete option {} on poll {} owned by {}",
                     currentUser, optionId, pollId, poll.getOwner());
             throw new PollOwnershipException("Only the owner can delete options of this poll");

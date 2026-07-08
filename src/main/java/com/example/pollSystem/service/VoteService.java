@@ -57,7 +57,7 @@ public class VoteService {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String currentUser = auth.getName();
 
-        if (poll.getOwner().equals(currentUser)) {
+        if (poll.getOwner().getUsername().equals(currentUser)) {
             log.warn("Owner {} attempted to vote on own poll {}", currentUser, pollId);
             throw new InvalidVoteException("Owner cannot vote own poll");
         }

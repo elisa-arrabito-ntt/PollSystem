@@ -20,9 +20,9 @@ public class Poll {
     @Column(nullable = false)
     private String question;
 
-    // username dell'owner (FK ???)
-    @Column(nullable = false)
-    private String owner;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "owner_id", nullable = false)
+    private User owner;
 
     @Column(nullable = false)
     private LocalDateTime expiresAt;

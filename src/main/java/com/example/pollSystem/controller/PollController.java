@@ -1,6 +1,7 @@
 package com.example.pollSystem.controller;
 
 import com.example.pollSystem.dto.request.CreatePollRequestDto;
+import com.example.pollSystem.dto.response.PollDetailsResponseDto;
 import com.example.pollSystem.dto.response.PollListPageResponseDto;
 import com.example.pollSystem.dto.response.PollResponseDto;
 import com.example.pollSystem.service.PollService;
@@ -36,5 +37,11 @@ public class PollController {
     public ResponseEntity<PollResponseDto> getPollById(@PathVariable Long id) {
         PollResponseDto response = pollService.getPollById(id);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/polls-details/{id}")
+    public ResponseEntity<PollDetailsResponseDto> getPollDetails(@PathVariable Long id) {
+        PollDetailsResponseDto dto = pollService.getPollDetails(id);
+        return ResponseEntity.status(201).body(dto); // 201 come da swagger
     }
 }

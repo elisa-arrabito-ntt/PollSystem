@@ -1,13 +1,19 @@
 package com.example.pollSystem.service;
 
 import com.example.pollSystem.dto.request.CreatePollRequestDto;
+import com.example.pollSystem.dto.response.PollDetailsResponseDto;
 import com.example.pollSystem.dto.response.PollListPageResponseDto;
 import com.example.pollSystem.dto.response.PollResponseDto;
+import com.example.pollSystem.entity.Option;
 import com.example.pollSystem.entity.Poll;
 import com.example.pollSystem.entity.PollStatus;
+import com.example.pollSystem.entity.User;
 import com.example.pollSystem.exception.PollNotFoundException;
+import com.example.pollSystem.exception.UsernameNotFoundException;
 import com.example.pollSystem.mapper.PollMapper;
+import com.example.pollSystem.repository.OptionRepository;
 import com.example.pollSystem.repository.PollRepository;
+import com.example.pollSystem.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -27,6 +33,8 @@ import java.util.List;
 public class PollService {
 
     private final PollRepository pollRepository;
+    private final UserRepository userRepository;
+    private final OptionRepository optionRepository;
     private final PollMapper pollMapper;
 
     @Transactional // atomicità
@@ -37,7 +45,9 @@ public class PollService {
 
         Poll poll = pollMapper.toEntity(request);
 
-        poll.setOwner(ownerUsername);
+        User owner = userRepository.findByUsername(ownerUsername)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        poll.setOwner(owner);
         poll.setStatus(PollStatus.ACTIVE);
 
         Poll saved = pollRepository.save(poll);
@@ -85,5 +95,14 @@ public class PollService {
                 });
 
         return pollMapper.toResponseDto(poll);
+    }
+
+    public PollDetailsResponseDto getPollDetails(Long pollId) {
+        Poll poll = pollRepository.findById(pollId)
+                .orElseThrow(() -> new PollNotFoundException("Poll not found"));
+
+        List<Option> options = optionRepository.findByPollId(pollId);
+
+        return pollMapper.toDetailsResponseDto(poll, options);
     }
 }
