@@ -4,12 +4,15 @@ import com.example.pollSystem.dto.response.ValidationErrorResponseDto;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import java.time.LocalDateTime;
+
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 
+@Slf4j
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -133,8 +136,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ValidationErrorResponseDto> handleGenericException(
             Exception ex,
             HttpServletRequest request) {
+        log.error("Unexpected error on path {}: {}", request.getRequestURI(), ex.getMessage(), ex);
         return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error", request);
     }
+
+
 
     private ResponseEntity<ValidationErrorResponseDto> buildErrorResponse(
             HttpStatus status,

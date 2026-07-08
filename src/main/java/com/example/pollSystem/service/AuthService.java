@@ -51,6 +51,7 @@ public class AuthService {
 
     @Transactional
     public void register(RegistrationRequestDto request) {
+        log.info("AuthService.register started for {}", request.getUsername());
         if (userRepository.existsByUsername(request.getUsername())) {
             log.warn("Registration failed: username {} already exists", request.getUsername());
             throw new UsernameAlreadyExistsException("Username already exists");
