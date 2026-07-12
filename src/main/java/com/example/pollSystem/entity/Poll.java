@@ -30,4 +30,10 @@ public class Poll {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private PollStatus status;
+
+    @Column(name = "winner_option_id")
+    private Long winnerOptionId;
+
+    @Column(name = "winner_percent")
+    private Double winnerPercent;
 }

@@ -3,6 +3,7 @@ package com.example.pollSystem.mapper;
 import com.example.pollSystem.dto.request.CreatePollRequestDto;
 import com.example.pollSystem.dto.response.PollDetailsResponseDto;
 import com.example.pollSystem.dto.response.PollResponseDto;
+import com.example.pollSystem.dto.response.WinnerOptionResponseDto;
 import com.example.pollSystem.entity.Option;
 import com.example.pollSystem.entity.Poll;
 import org.mapstruct.Mapper;
@@ -26,6 +27,19 @@ public interface PollMapper {
     @Mapping(source = "poll.expiresAt", target = "expiresAt")
     @Mapping(source = "poll.status", target = "status")
     @Mapping(source = "options", target = "options")
-    @Mapping(target = "winner", ignore = true) // per ora (poi calcolo del winner da parte del batch)
+    @Mapping(target = "winner", expression = "java(toWinnerDto(poll))") // mapping custom per il campo winner
     PollDetailsResponseDto toDetailsResponseDto(Poll poll, List<Option> options);
+
+    // default utile per inserire metodi di utilità in un'interfaccia
+    // questo metodo non deve essere generato da mapstruct ma rimane disponibile "dentro" l'implementazione che MapStruct genera
+    default WinnerOptionResponseDto toWinnerDto(Poll poll) {
+        if (poll.getWinnerOptionId() == null || poll.getWinnerPercent() == null) {
+            return null;
+        }
+        return WinnerOptionResponseDto.builder()
+                .pollId(poll.getId())
+                .optionId(poll.getWinnerOptionId())
+                .percentOfWiner(poll.getWinnerPercent())
+                .build();
+    }
 }
