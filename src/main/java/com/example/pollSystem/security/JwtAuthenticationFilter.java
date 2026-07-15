@@ -6,9 +6,12 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -40,30 +43,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String jwt = authHeader.substring(7);
 
-        String username = jwtService.extractUsername(jwt);
+        // Il JwtService stabilisce se il token è valido crittograficamente
+        if (jwtService.isTokenValid(jwt) && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-        // Se il SecurityContext è vuoto, procedo (così se fosse già pieno non sovrascrivo)
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            String username = jwtService.extractUsername(jwt);
 
-            // verifico che il token sia valido per questo user (ricavato dal db)
-            if (jwtService.isTokenValid(jwt, userDetails)) {
+            if(username != null) {
+                // se l'utente non esiste più nel DB, questo lancerà UsernameNotFoundException e fermerà tutto
+                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                // creo l'oggetto di autenticazione
                 UsernamePasswordAuthenticationToken authToken =
                         new UsernamePasswordAuthenticationToken(
                                 userDetails,
                                 null,
                                 userDetails.getAuthorities()
                         );
-                authToken.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request)
-                );
-
+                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
-
                 log.debug("JWT authentication set in SecurityContext for user {}", username);
-            } else {
-                log.warn("Invalid JWT token for user {}", username);
             }
+        } else {
+            log.warn("Invalid JWT token");
         }
 
         filterChain.doFilter(request, response);

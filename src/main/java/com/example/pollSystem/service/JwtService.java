@@ -2,6 +2,7 @@ package com.example.pollSystem.service;
 
 import com.example.pollSystem.entity.User;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
@@ -32,7 +33,7 @@ public class JwtService {
                 .subject(user.getUsername())
                 .issuedAt(issuedAt)
                 .expiration(expiration)
-                .signWith(getSigningKey(), Jwts.SIG.HS256)
+                .signWith(getSigningKey(), Jwts.SIG.HS256) // firma con la chiave segreta
                 .compact();
     }
 
@@ -49,10 +50,14 @@ public class JwtService {
         return extractClaim(token, Claims::getSubject);
     }
 
-    // Verifica che il token sia ancora valido e appartenga a questo user
-    public boolean isTokenValid(String token, UserDetails userDetails) {
-        String username = extractUsername(token);
-        return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
+    public boolean isTokenValid(String token) {
+        try {
+            extractAllClaims(token); // Controlla firma e scadenza
+            return true;
+        } catch (JwtException e) {
+            // Il token è manomesso o scaduto
+            return false;
+        }
     }
 
     // Controlla se il token è scaduto
@@ -68,9 +73,10 @@ public class JwtService {
     }
 
     // Legge tutti i claims dal token usando la stessa chiave di firma
+    // i claims contengono subject, issuedAt, expiration, ecc.
     private Claims extractAllClaims(String token) {
         return Jwts.parser()
-                .verifyWith(getSigningKey())
+                .verifyWith(getSigningKey()) // verifico la firma con la chiave segreta
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();

@@ -25,24 +25,10 @@ public class PollBatchJob {
     private final RabbitTemplate rabbitTemplate;
     private final OptionRepository optionRepository;
 
-    //@Scheduled(cron = "0 0 0 * * *") // ogni giorno alle 00:00
-    @Scheduled(fixedDelay = 10000) // ogni 10 secondi
+    @Scheduled(cron = "0 0 0 * * *") // ogni giorno alle 00:00
     public void processExpiringPolls() {
         log.info("Starting PollBatchJob...");
 
-        // TEST: invio un messaggio semplice per verificare la connessione e la coda
-        WinnerMailMessage testMessage = WinnerMailMessage.builder()
-                .pollQuestion("TEST: chi vincerà la Serie A?")
-                .winnerOption("Juventus")
-                .winnerPercent(50.0)
-                .expiredAt(LocalDate.now())
-                .ownerEmail("test@example.com")
-                .build();
-
-        rabbitTemplate.convertAndSend("poll.winner.mail", testMessage);
-        log.info("Test message sent to queue poll.winner.mail");
-
-        // --------------------------------------
         LocalDate today = LocalDate.now();
         LocalDateTime start = today.atStartOfDay();
         LocalDateTime end = today.plusDays(1).atStartOfDay().minusNanos(1);
