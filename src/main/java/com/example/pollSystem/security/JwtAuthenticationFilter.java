@@ -68,4 +68,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         filterChain.doFilter(request, response);
     }
+
+    // Dentro la classe JwtAuthenticationFilter
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String path = request.getServletPath();
+        // Se la richiesta è per MCP, non applicare i controlli del token JWT
+        return path.startsWith("/mcp");
+    }
 }

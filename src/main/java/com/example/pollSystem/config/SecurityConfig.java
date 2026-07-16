@@ -11,6 +11,10 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -22,22 +26,49 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                // Disabilita CSRF (mantenendo l'esclusione esplicita per MCP se in futuro lo riabiliti)
                 .csrf(csrf -> csrf.disable())
 
-                // non serve, lo stato di sessione è nel token stesso
+                // Configurazione CORS
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
+                // Stato di sessione stateless (gestito via JWT)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 .authorizeHttpRequests(auth -> auth
-                        // Endpoint pubblici
-                        .requestMatchers("/rest/api/v0/registration", "/rest/api/v0/login").permitAll()
+                        // Endpoint pubblici e percorsi MCP Server completamente accessibili
+                        .requestMatchers(
+                                "/rest/api/v0/registration",
+                                "/rest/api/v0/login",
+                                "/mcp",
+                                "/mcp/**"
+                        ).permitAll()
+
                         // Tutto il resto richiede autenticazione
-                        .anyRequest().authenticated() // richiede un SecurityContext non vuoto
+                        .anyRequest().authenticated()
                 )
 
-                // aggiungo prima il mio filtro, per autenticare il token JWT prima che arrivi al filtro di Spring Security
+                // Aggiunge il filtro JWT per le rotte protette
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+
+        // Permette le origini in modo flessibile per i test con MCP Inspector / strumenti locali
+        configuration.setAllowedOriginPatterns(List.of("*"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
+
+        // Espone gli header per evitare problemi di lettura dei flussi HTTP Streamable
+        configuration.setExposedHeaders(List.of("Content-Type", "Cache-Control", "Connection"));
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
 }
