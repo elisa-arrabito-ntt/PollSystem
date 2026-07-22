@@ -23,23 +23,36 @@ public class PollMcpTools {
 
     @McpTool(
             name = "search_polls",
-            description = "Cerca sondaggi in base a un parametro di ricerca testuale opzionale, supportando la paginazione con page da 0 e size."
+            description = "Query the live application database to search for active polls using an optional text filter. Supports pagination."
     )
     public PollListPageResponseDto searchPolls(
-            @McpToolParam(description = "Testo di ricerca opzionale") String search,
-            @McpToolParam(description = "Numero di pagina, a partire da 0", required = true) int page,
-            @McpToolParam(description = "Dimensione della pagina", required = true) int size) {
+            @McpToolParam(description = "Optional text search query to filter poll titles", required = false) String search,
+            @McpToolParam(description = "The page number to retrieve, starting from 0", required = true) int page,
+            @McpToolParam(description = "The number of items to return per page (e.g., 10)", required = true) int size) {
         return pollService.getPolls(search, page, size);
     }
+
+
+
+    @McpTool(
+            name = "get_poll_details",
+            description = "Retrieve the full structure of a specific poll by its database ID, including title, metadata, and available options."
+    )
+    public PollDetailsResponseDto getPollDetails(
+            @McpToolParam(description = "The unique database ID of the poll", required = true) Long pollId) {
+        return pollService.getPollDetails(pollId);
+    }
+
+
 
     public record OptionVoteResult(Long optionId, String optionMessage, long voteCount) {}
 
     @McpTool(
             name = "get_poll_votes",
-            description = "Restituisce il conteggio reale dei voti per tutte le opzioni di un sondaggio. Usalo prima di fare analisi statistiche su un sondaggio."
+            description = "Retrieve the live real-time vote results and counts for all options within a specific poll. Use this before performing statistical analysis."
     )
     public List<OptionVoteResult> getPollVotes(
-            @McpToolParam(description = "ID del sondaggio", required = true) Long pollId) {
+            @McpToolParam(description = "The unique database ID of the poll", required = true) Long pollId) {
         PollDetailsResponseDto details = pollService.getPollDetails(pollId);
         return details.getOptions().stream()
                 .map(opt -> new OptionVoteResult(
